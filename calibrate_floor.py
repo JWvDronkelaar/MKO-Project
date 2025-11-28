@@ -1,7 +1,7 @@
 # calibrate_floor.py
 import cv2, numpy as np
 
-CAM_INDEX = "People walking.mp4"
+CAM_INDEX = "Footage/People walking.mp4"
 SAVE_PATH = "H.npy"   # homografie wordt hier opgeslagen
 
 clicked = []

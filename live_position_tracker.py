@@ -24,7 +24,7 @@ JSONL_PATH = "tracks.jsonl"
 H_PATH = "H.npy"         # van calibrate_floor.py
 USE_HOMOGRAPHY = True
 EMA_ALPHA = 0.6          # smoothing per ID
-SHOW_WINDOW = True
+SHOW_WINDOW = False
 PERSON_CLS = 0           # klasse-id voor "person" in COCO is 0
 # ------------------------------
 
@@ -127,7 +127,7 @@ try:
                 "id": track_id,
                 "pos": [round(Xs,3), round(Ys,3)],
             #    "speed_m_s": round(speed,3),
-            #    "dir_deg": round(direction,1),
+                "dir_deg": round(direction,1),
                 "conf": round(conf, 2)
             })
 
@@ -135,7 +135,7 @@ try:
             color = palette.by_idx(track_id).as_bgr()
             cv2.rectangle(vis,(x1,y1),(x2,y2),color,2)
             cv2.circle(vis,(foot_x,foot_y),5,color,-1)
-            cv2.putText(vis,f"ID {track_id} | {round(conf, 2)} | {round(Xs,2), round(Ys,2)} ",(x1,y1-8),cv2.FONT_HERSHEY_SIMPLEX,0.6,color,2)
+            cv2.putText(vis,f"ID {track_id} | {round(conf, 2)} | {round(Xs,2), round(Ys,2)}| {round(direction,1)} ",(x1,y1-8),cv2.FONT_HERSHEY_SIMPLEX,0.6,color,2)
             
         
         # 6) live JSON (stdout + optioneel log)
@@ -151,11 +151,13 @@ try:
 
             for p in people:
                 x, y = p["pos"]
+                r = p["dir_deg"]
                 out.append({
                     "id": str(p["id"]),
                     "x": float(x),
                     "y": float(y),
-                    "z": 0.0
+                    "z": 0.0,
+                    "r": float(r)
                 })
 
             return out
