@@ -4,6 +4,16 @@ import cv2, numpy as np
 from ultralytics import YOLO
 import supervision as sv
 
+# external_server.py
+import socket
+import time
+import json
+import math
+
+# Hosting settings
+HOST = "127.0.0.1"
+PORT = 9999
+
 # ---------- Settings ----------
 CAM_INDEX = "Footage/People walking.mp4"
 MODEL = "yolov8n.pt"     # mensen-detectie; CPU ok
@@ -17,6 +27,8 @@ EMA_ALPHA = 0.6          # smoothing per ID
 SHOW_WINDOW = True
 PERSON_CLS = 0           # klasse-id voor "person" in COCO is 0
 # ------------------------------
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 # laad homografie
 try:
@@ -124,12 +136,33 @@ try:
             cv2.rectangle(vis,(x1,y1),(x2,y2),color,2)
             cv2.circle(vis,(foot_x,foot_y),5,color,-1)
             cv2.putText(vis,f"ID {track_id} | {round(conf, 2)} | {round(Xs,2), round(Ys,2)} ",(x1,y1-8),cv2.FONT_HERSHEY_SIMPLEX,0.6,color,2)
-
+            
+        
         # 6) live JSON (stdout + optioneel log)
         packet = {"ts": ts2, "people": people_out}
         line = json.dumps(packet)
         print(line, flush=True)
         if fout: fout.write(line+"\n")
+
+        def format_live_packet(packet):
+            """Zet inkomende tracker-data om naar Blender/Unity formaat."""
+            out = []
+            people = packet.get("people", [])
+
+            for p in people:
+                x, y = p["pos"]
+                out.append({
+                    "id": str(p["id"]),
+                    "x": float(x),
+                    "y": float(y),
+                    "z": 0.0
+                })
+
+            return out
+
+        # 7) send via UDP 
+        print(f"Sending data to UDP {HOST}:{PORT}")
+        sock.sendto(json.dumps(format_live_packet(packet)).encode("utf-8"), (HOST, PORT))
 
         if SHOW_WINDOW:
             cv2.putText(vis,f"People: {len(people_out)}",(12,28),
@@ -137,6 +170,7 @@ try:
             cv2.imshow("Live Position Tracker (ESC to quit)", vis)
             if cv2.waitKey(1) & 0xFF == 27:
                 break
+
 
 finally:
     cap.release()
