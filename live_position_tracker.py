@@ -14,12 +14,14 @@ import math
 HOST = "127.0.0.1"
 PORT = 9999
 
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
 # ---------- Settings ----------
 CAM_INDEX = "Footage/People walking.mp4"
-MODEL = "yolov8n.pt"     # mensen-detectie; CPU ok
+MODEL = "Algo's/yolov8n.pt"     # mensen-detectie; CPU ok
 CONF_THRES = 0.1
 IOU_THRES = 0.5
-SAVE_JSONL = True
+SAVE_JSONL = False
 JSONL_PATH = "tracks.jsonl"
 H_PATH = "H.npy"         # van calibrate_floor.py
 USE_HOMOGRAPHY = True
@@ -27,8 +29,6 @@ EMA_ALPHA = 0.6          # smoothing per ID
 SHOW_WINDOW = False
 PERSON_CLS = 0           # klasse-id voor "person" in COCO is 0
 # ------------------------------
-
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 # laad homografie
 try:
@@ -94,8 +94,6 @@ try:
 
         for i,xyxy in enumerate(tracks.xyxy):
             conf = float(tracks.confidence[i]) if tracks.confidence is not None else None
-            # if conf is None or conf < 0.75:
-            #    continue
             track_id = int(tracks.tracker_id[i])
             x1,y1,x2,y2 = xyxy.astype(int)
             # 3) voetpunt (midden onder bbox)
