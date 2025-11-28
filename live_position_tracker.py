@@ -5,7 +5,7 @@ from ultralytics import YOLO
 import supervision as sv
 
 # ---------- Settings ----------
-CAM_INDEX = "People walking.mp4"
+CAM_INDEX = "Footage/People walking.mp4"
 MODEL = "yolov8n.pt"     # mensen-detectie; CPU ok
 CONF_THRES = 0.1
 IOU_THRES = 0.5
