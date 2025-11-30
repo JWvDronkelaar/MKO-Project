@@ -1,0 +1,5 @@
+# requirements.in
+opencv-python
+ultralytics
+supervision
+numpy
