@@ -1,5 +1,5 @@
 ## Dependencies
-Requirements can be installed the usual way:  
+Requirements can be installed the usual way after having created a venv and making certain it is active.  
 `pip install -r requirements.txt`
 
 For a dev environment also run:
@@ -7,8 +7,12 @@ For a dev environment also run:
 
 For maintaining and updating requirements we use `pip-tools`
 
- The main libraries are defined in `requirements.in`
+ The main libraries are defined in `requirements.in`. This is the file you maintain by hand.
 
- `pip-compile requirements.in` will generate a new `requirements.txt`.
+ `pip-compile --upgrade requirements.in` will generate a new *requirements.txt* based on *requirements.in*.
 
- *Do **not** update the `requirements.txt` by hand!* 
+ `pip-sync` will bring the venv in sync with the specified requirements. This includes uninstalling libraries which are no longer needed. By default it will look for *requirements.txt*.
+
+*requirements_dev.txt* has `-c requirements.txt` at the top so running `pip-sync requirements_dev.txt` does not uninstall any libraries mentioned in *requirements.text* but excluded in *requirements_dev.txt*.
+
+ > Do **not** update the *requirements.txt* by hand! 

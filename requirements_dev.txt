@@ -1,2 +1,3 @@
 # requirements_dev.txt
+-c requirements.txt
 pip-tools

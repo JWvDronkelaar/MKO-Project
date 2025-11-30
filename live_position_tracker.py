@@ -18,7 +18,7 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 # ---------- Settings ----------
 CAM_INDEX = "Footage/People walking.mp4"
-MODEL = "Algo's/yolov8n.pt"     # mensen-detectie; CPU ok
+MODEL = "Algos/yolov8n.pt"     # mensen-detectie; CPU ok
 CONF_THRES = 0.1
 IOU_THRES = 0.5
 SAVE_JSONL = False
@@ -26,7 +26,7 @@ JSONL_PATH = "tracks.jsonl"
 H_PATH = "H.npy"         # van calibrate_floor.py
 USE_HOMOGRAPHY = True
 EMA_ALPHA = 0.6          # smoothing per ID
-SHOW_WINDOW = False
+SHOW_WINDOW = True
 PERSON_CLS = 0           # klasse-id voor "person" in COCO is 0
 # ------------------------------
 

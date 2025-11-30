@@ -1,4 +1,8 @@
 # requirements.in
+
+# Not certain about python version management here
+# python==3.11.9
+
 opencv-python
 ultralytics
 supervision
