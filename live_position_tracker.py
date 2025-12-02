@@ -26,7 +26,7 @@ JSONL_PATH = "tracks.jsonl"
 H_PATH = "H.npy"         # van calibrate_floor.py
 USE_HOMOGRAPHY = True
 EMA_ALPHA = 0.6          # smoothing per ID
-SHOW_WINDOW = True
+SHOW_WINDOW = False
 PERSON_CLS = 0           # klasse-id voor "person" in COCO is 0
 # ------------------------------
 
@@ -71,6 +71,8 @@ palette = sv.ColorPalette.from_hex([
 
 print("[INFO] Live positie-tracking gestart. Druk ESC om te stoppen.")
 try:
+    frame_number = 0
+    
     while True:
         ok, frame = cap.read()
         if not ok: break
@@ -151,7 +153,7 @@ try:
                 x, y = p["pos"]
                 r = p["dir_deg"]
                 out.append({
-                    "id": str(p["id"]),
+                    "id": int(p["id"]),
                     "x": float(x),
                     "y": float(y),
                     "z": 0.0,
@@ -170,7 +172,14 @@ try:
             cv2.imshow("Live Position Tracker (ESC to quit)", vis)
             if cv2.waitKey(1) & 0xFF == 27:
                 break
-
+            
+            # print(f"Saving debug frame {frame_number}")
+            # bgr_frame = cv2.cvtColor(vis, cv2.COLOR_RGB2BGR)
+            # img_write_success =  cv2.imwrite(f"D:/vscode/motion_tracking/Footage/debug_frames/output_{frame_number}.png", vis)
+            # if not img_write_success:
+            #     print(f"Failed to write debug frame {frame_number}")
+        
+        frame_number += 1
 
 finally:
     cap.release()

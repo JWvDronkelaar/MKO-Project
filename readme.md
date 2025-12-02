@@ -13,6 +13,6 @@ For maintaining and updating requirements we use `pip-tools`
 
  `pip-sync` will bring the venv in sync with the specified requirements. This includes uninstalling libraries which are no longer needed. By default it will look for *requirements.txt*.
 
-*requirements_dev.txt* has `-c requirements.txt` at the top so running `pip-sync requirements_dev.txt` does not uninstall any libraries mentioned in *requirements.text* but excluded in *requirements_dev.txt*.
+*requirements_dev.txt* has `-c requirements.txt` at the top so running `pip-sync requirements_dev.txt` does not uninstall any libraries mentioned in *requirements.txt* but excluded in *requirements_dev.txt*.
 
  > Do **not** update the *requirements.txt* by hand! 
