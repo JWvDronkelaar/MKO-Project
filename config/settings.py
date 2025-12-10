@@ -12,16 +12,19 @@ class YOLOSettings:
 
 @dataclass
 class TrackingSettings:
-    ema_alpha: float = 0.6
+    ema_alpha: float = 0.9  # default = 0.6
     use_homography: bool = True
     homography_path: str = "homography/H.npy"
 
 
 @dataclass
 class VideoSettings:
-    camera_index: str = "Footage/People walking.mp4"
-    width: int = 1280
-    height: int = 720
+    # camera_index: str = "Footage/People walking.mp4"
+    # width: int = 1280
+    # height: int = 720
+    camera_index: int = 2
+    width: int = 1920
+    height: int = 1080
     
 
 @dataclass

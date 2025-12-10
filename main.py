@@ -6,7 +6,8 @@ import numpy as np
 
 from config.settings import AppSettings
 from datatypes.datatype import BBox, WorldPosition
-from video.video_capture import VideoSource
+from framesource.source import VideoFileSource, CameraSource
+from framesource.FramePacer import AsyncFramePacer
 from detection.detector import PeopleDetector
 from tracking.tracker import ByteTrackerWrapper
 from transform.projection import Projector
@@ -22,7 +23,7 @@ class LiveTracker:
         self.settings = settings
 
         # components
-        self.source = VideoSource(settings.video)
+        self.source = CameraSource(settings.video)
         self.detector = PeopleDetector(settings.yolo)
         self.tracker = ByteTrackerWrapper()
         self.projector = Projector(settings.tracking)
@@ -57,9 +58,15 @@ class LiveTracker:
 
 
     def _run_loop(self):
+        # pacer = AsyncFramePacer(30)
+        # pacer.start()
+
         try:
-            for frame, frame_number in self.source:
-                if not self.running:
+            while self.running:
+                frame, frame_number = self.source.read()
+
+                if frame is None:
+                    # File ended OR camera error
                     break
 
                 ts = time.time()
@@ -75,50 +82,47 @@ class LiveTracker:
                     if mask:
                         det = det[np.array(mask, dtype=bool)]
 
-                # 2) ByteTrack tracking
+                # 2) tracking
                 tracks = self.tracker.update_with_detections(det)
 
-                # 3) Convert to world positions
+                # 3) world positions
                 world_positions = self._produce_world_positions(tracks, ts)
 
-                # 4) JSON packaging
+                # 4) JSON
                 packet = jsonpack.format_live_packet(world_positions, ts_str)
                 packet_for_receiver = jsonpack.format_for_receiver(packet)
 
-                # 5) Send via UDP
+                # 5) UDP
                 self.sender.send(packet_for_receiver)
 
-                # logging (very verbose)
-                line = json.dumps(packet)
-                print(line, flush=True)
+                # logging
                 if self.fout:
-                    self.fout.write(line + "\n")
+                    self.fout.write(json.dumps(packet) + "\n")
 
                 # 6) Visualization
+                key = 0
                 if self.settings.visualizer.show_window:
-                    vis = draw_frame(
-                        frame,
-                        tracks,
-                        self.settings.visualizer,
-                        fps_tracker=self.fps_tracker
-                    )
-
+                    vis = draw_frame(frame, tracks, self.settings.visualizer, fps_tracker=self.fps_tracker)
                     cv2.imshow("Live Position Tracker (ESC to quit)", vis)
-                    key = cv2.waitKey(1) & 0xFF == 27
+
+                    key = cv2.waitKey(1)
                 else:
-                    # still poll for ESC even though no window is shown
-                    key = cv2.waitKey(1) & 0xFF == 27
-                
-                if key == 27:
-                    self._running = False # Could be used outside of this loop and if it is, it serves a purpose. Check if it can be removed.
+                    # still poll input
+                    key = cv2.waitKey(1)
+
+                if key == 27:  # ESC
+                    self.running = False
                     break
 
-                self.frame_number += 1
+                # pacing
+                # actual_fps = pacer.pace()
+                self.fps_tracker.update()
 
         finally:
             self._cleanup()
 
 
+    # TODO: I don't think this belongs here at all!
     def _produce_world_positions(self, tracks, ts: float):
         """Convert tracked bounding boxes into world coordinates with smoothing."""
         world_positions = []
