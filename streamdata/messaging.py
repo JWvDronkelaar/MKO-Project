@@ -3,9 +3,9 @@ import json
 from typing import Any
 
 class UDPSender:
-    def __init__(self, host: str, port: int):
-        self.host = host
-        self.port = int(port)
+    def __init__(self, settings):
+        self.host = settings.host
+        self.port = settings.port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     def send(self, obj: Any):

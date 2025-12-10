@@ -4,7 +4,7 @@ import math
 import cv2
 import numpy as np
 
-from config import *
+from config.settings import AppSettings
 from datatypes.datatype import BBox, WorldPosition
 from video.video_capture import VideoSource
 from detection.detector import PeopleDetector
@@ -16,19 +16,24 @@ import streamdata.jsonpack as jsonpack
 from viz.visualizer import draw_frame
 from viz.fps_tracker import FPSTracker
 
+settings = AppSettings()
+
 # optional JSONL logging
-fout = open(JSONL_PATH, "w") if SAVE_JSONL else None
+fout = open(settings.jsonl_path, "w") if settings.save_jsonl else None
 
 def main():
-    print("[INFO] Starting refactored live tracker.")
-    source = VideoSource(CAM_INDEX, width=FRAME_WIDTH, height=FRAME_HEIGHT)
-    detector = PeopleDetector(MODEL_PATH, conf=CONF_THRES, iou=IOU_THRES)
+    source = VideoSource(settings.video)
+    detector = PeopleDetector(settings.yolo)
     tracker = ByteTrackerWrapper()
-    projector = Projector(H_PATH, use_homography=USE_HOMOGRAPHY)
-    smoother = EMASmoother(EMA_ALPHA)
-    sender = UDPSender(HOST, PORT)
+    projector = Projector(settings.tracking)
+    smoother = EMASmoother(settings.tracking.ema_alpha)
+    sender = UDPSender(settings.network)
 
     _fps_tracker = FPSTracker()
+
+    print("Starting Tracker!")
+    print(f"[DEBUG] Sending data to UDP {settings.network.host}:{settings.network.port}")
+    # TODO: echo all settings here?
 
     try:
         for frame, frame_number in source:
@@ -41,7 +46,7 @@ def main():
                 cls = det.class_id if det.class_id is not None else []
                 mask = []
                 for c in cls:
-                    mask.append(c == PERSON_CLS)
+                    mask.append(c == settings.yolo.person_class_id)
                 if len(mask) > 0:
                     det = det[np.array(mask, dtype=bool)]
 
@@ -69,21 +74,23 @@ def main():
                 world_positions.append(wp)
 
             # 4) produce packets
+            # TODO: why is packet for receiver (which is not optional), dependant on packet
+            # which is optional for logging?
             packet = jsonpack.format_live_packet(world_positions, ts_str)
             packet_for_receiver = jsonpack.format_for_receiver(packet)
 
             # 5) output
+            sender.send(packet_for_receiver)
+
+            # TODO: create levels for logging, this is a lot of spam eating up more important messages
             line = json.dumps(packet)
             print(line, flush=True)
             if fout:
                 fout.write(line + "\n")
 
-            print(f"[DEBUG] Sending data to UDP {HOST}:{PORT}")
-            sender.send(packet_for_receiver)
-
             # 6) visualization
-            if SHOW_WINDOW:
-                vis = draw_frame(frame, tracks, show_tracker_count=True, fps_tracker=_fps_tracker)
+            if settings.visualizer.show_window:
+                vis = draw_frame(frame, tracks, settings.visualizer, fps_tracker=_fps_tracker)
                 cv2.imshow("Live Position Tracker (ESC to quit)", vis)
                 if cv2.waitKey(1) & 0xFF == 27:
                     break
@@ -92,6 +99,9 @@ def main():
         print("[INFO] Shutting down.")
         source.release()
         cv2.destroyAllWindows()
+        # TODO: does the socket not need to be closed?
+        
+        # TODO: this is json out I think, seperate this logic out completely
         if fout:
             fout.close()
 

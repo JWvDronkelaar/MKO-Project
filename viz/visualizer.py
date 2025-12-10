@@ -5,10 +5,11 @@ import cv2
 from .palette import ColorPalette
 from datatypes.datatype import WorldPosition
 
+# TODO: this feels needlessly complex
 palette = ColorPalette()
 
 
-def draw_frame(frame, tracks, fps_tracker = None, show_tracker_count=True):
+def draw_frame(frame, tracks, settings, fps_tracker = None):
     vis = frame.copy()
     # draw tracked bboxes and foot positions (tracks expected to have xyxy, confidence, tracker_id)
     if tracks is not None:
@@ -24,11 +25,12 @@ def draw_frame(frame, tracks, fps_tracker = None, show_tracker_count=True):
             cv2.putText(vis, f"ID {tid} | {round(conf,2)}", (x1, y1 - 8),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
-    if show_tracker_count:
+    if settings.show_tracker_count:
         cv2.putText(vis, f"People: {len(tracks)}", (12,28),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,255,0), 2)
     
-    if fps_tracker is not None:
+    # TODO: simplify this to only using settings.show_fps and initialize fps_tracker instance in main depending on that value
+    if fps_tracker is not None and settings.show_fps:
         draw_fps(vis, fps_tracker)
     
     return vis
