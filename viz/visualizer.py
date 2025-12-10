@@ -8,7 +8,7 @@ from datatypes.datatype import WorldPosition
 palette = ColorPalette()
 
 
-def draw_frame(frame, tracks, world_positions: List[WorldPosition], fps_tracker = None, show_tracker_count=True):
+def draw_frame(frame, tracks, fps_tracker = None, show_tracker_count=True):
     vis = frame.copy()
     # draw tracked bboxes and foot positions (tracks expected to have xyxy, confidence, tracker_id)
     if tracks is not None:
@@ -24,26 +24,14 @@ def draw_frame(frame, tracks, world_positions: List[WorldPosition], fps_tracker 
             cv2.putText(vis, f"ID {tid} | {round(conf,2)}", (x1, y1 - 8),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
-    # TODO: make "draw_positions_list" argument or better yet, configuration to be passed along to visualizer
-    if True:
-        draw_positions_list(vis, world_positions)
-
     if show_tracker_count:
-        cv2.putText(vis, f"People: {len(world_positions)}", (12,28),
+        cv2.putText(vis, f"People: {len(tracks)}", (12,28),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,255,0), 2)
     
     if fps_tracker is not None:
         draw_fps(vis, fps_tracker)
     
     return vis
-
-
-def draw_positions_list(vis, world_positions):
-    for p in world_positions:
-        px = 12
-        py = 40 + 18 * p.id
-        cv2.putText(vis, f"WP ID {p.id}: ({p.x:.2f},{p.y:.2f}) r={p.r:.1f}", (px, py),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 1)
 
 
 def draw_fps(vis, fps_tracker):

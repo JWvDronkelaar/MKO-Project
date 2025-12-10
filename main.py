@@ -78,12 +78,12 @@ def main():
             if fout:
                 fout.write(line + "\n")
 
-            # print(f"[DEBUG] Sending data to UDP {HOST}:{PORT}")
+            print(f"[DEBUG] Sending data to UDP {HOST}:{PORT}")
             sender.send(packet_for_receiver)
 
             # 6) visualization
             if SHOW_WINDOW:
-                vis = draw_frame(frame, tracks, world_positions, show_tracker_count=True, fps_tracker=_fps_tracker)
+                vis = draw_frame(frame, tracks, show_tracker_count=True, fps_tracker=_fps_tracker)
                 cv2.imshow("Live Position Tracker (ESC to quit)", vis)
                 if cv2.waitKey(1) & 0xFF == 27:
                     break

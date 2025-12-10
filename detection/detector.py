@@ -23,6 +23,6 @@ class PeopleDetector:
 
     def detect(self, frame):
         """Return supervision Detections for the frame (filtered by person class later)."""
-        res = self.model.predict(source=frame, verbose=False, conf=self.conf, iou=self.iou, device=0)[0]
+        res = self.model.predict(source=frame, verbose=False, conf=self.conf, iou=self.iou, device="cuda")[0]
         det = sv.Detections.from_ultralytics(res)
         return det, res  # return both for name mapping if needed
