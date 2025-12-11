@@ -116,8 +116,7 @@ class LiveTracker:
                         except Exception:
                             pass
 
-                    # 7) visualization
-                    if getattr(self.settings, "visualizer", None) and getattr(self.settings.visualizer, "show_window", False):
+                    if self.settings.visualizer.show_window:
                         vis = draw_frame(frame, tracks, self.settings.visualizer, fps_tracker=self.fps_tracker)
                         cv2.imshow("Live Position Tracker (ESC to quit)", vis)
                         key = cv2.waitKey(1)
