@@ -83,10 +83,10 @@ class LiveTracker:
         """
         try:
             while self.running:
-                # self.pacer.start_frame()
+                self.pacer.start_frame()
                 # If the source thread stopped (e.g. file EOF), exit loop
-                # if not self.source.is_alive:
-                #     break
+                if not self.source.is_alive:
+                    break
                 
                 frame, frame_number = self.source.read()
                 loop_start = time.time()
@@ -138,12 +138,9 @@ class LiveTracker:
                     self.running = False
                     break
 
-                # 8) update fps tracker (measures processing frequency)
-                self.fps_tracker.update()
-
                 # 9) pacing: delay as needed but only after we've consumed the frame
-                # self.pacer.end_frame()
-
+                self.pacer.end_frame()
+                self.fps_tracker.update()
         finally:
             self._cleanup()
 
