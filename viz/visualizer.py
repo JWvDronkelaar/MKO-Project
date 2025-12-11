@@ -37,20 +37,20 @@ def draw_frame(frame, tracks, settings, fps_tracker = None):
 
 
 def draw_fps(vis, fps_tracker):
-    fps_tracker.update()
+    fps_info = fps_tracker.get_fps()
 
     h, w = vis.shape[:2]
     x = w - 260
     y = 20
 
-    cv2.putText(vis, f"FPS: {fps_tracker.current:5.1f}", (x, y),
+    cv2.putText(vis, f"FPS: {fps_info.current:5.1f}", (x, y),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 2)
 
-    cv2.putText(vis, f"AVG: {fps_tracker.average:5.1f}", (x, y+20),
+    cv2.putText(vis, f"AVG: {fps_info.avg:5.1f}", (x, y+20),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200,200,200), 2)
 
-    cv2.putText(vis, f"MIN: {fps_tracker.minimum:5.1f}", (x, y+40),
+    cv2.putText(vis, f"MIN: {fps_info.min:5.1f}", (x, y+40),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200,200,200), 2)
 
-    cv2.putText(vis, f"MAX: {fps_tracker.maximum:5.1f}", (x, y+60),
+    cv2.putText(vis, f"MAX: {fps_info.max:5.1f}", (x, y+60),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200,200,200), 2)

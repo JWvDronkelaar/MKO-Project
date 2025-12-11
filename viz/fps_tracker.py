@@ -1,41 +1,51 @@
-# utils/fps_tracker.py
 import time
+from collections import deque
+from dataclasses import dataclass
+
+@dataclass
+class FPSInfo:
+    current: float
+    avg: float
+    max: float
+    min: float
 
 class FPSTracker:
-    def __init__(self):
-        self.last_ts = None
-        self.fps_history = []
+    """
+    Tracks FPS over a rolling window of frames.
+    """
+    def __init__(self, window_size=100):
+        self.times = deque(maxlen=window_size)  # store last N timestamps
+        self.last_time = None
+        self.current = 0.0
+        self.avg = 0.0
+        self.max = 0.0
+        self.min = float('inf')
 
     def update(self):
-        """Call once per frame. Returns current FPS."""
-        now = time.time()
-        if self.last_ts is None:
-            self.last_ts = now
-            return 0.0  # first frame
+        now = time.perf_counter()
+        if self.last_time is not None:
+            dt = now - self.last_time
+            if dt > 0:
+                fps = 1.0 / dt
+                self.current = fps
+                self.times.append(fps)
+                self.avg = sum(self.times) / len(self.times)
+                self.max = max(self.times)
+                self.min = min(self.times)
+        self.last_time = now
 
-        dt = now - self.last_ts
-        self.last_ts = now
+    def reset(self):
+        self.times.clear()
+        self.last_time = None
+        self.current = 0.0
+        self.avg = 0.0
+        self.max = 0.0
+        self.min = float('inf')
 
-        if dt > 0:
-            fps = 1.0 / dt
-            self.fps_history.append(fps)
-            return fps
-        return 0.0
-
-    @property
-    def current(self):
-        return self.fps_history[-1] if self.fps_history else 0.0
-
-    @property
-    def average(self):
-        if not self.fps_history:
-            return 0.0
-        return sum(self.fps_history) / len(self.fps_history)
-
-    @property
-    def minimum(self):
-        return min(self.fps_history) if self.fps_history else 0.0
-
-    @property
-    def maximum(self):
-        return max(self.fps_history) if self.fps_history else 0.0
+    def get_fps(self) -> FPSInfo:
+        return FPSInfo(
+            current=self.current,
+            avg=self.avg,
+            max=self.max,
+            min=self.min
+        )

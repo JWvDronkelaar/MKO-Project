@@ -33,7 +33,7 @@ class LiveTracker:
 
         self.pacer = FramePacer(settings.video.target_fps)
 
-        self.fps_tracker = FPSTracker() # TODO: this is garbage, replace with something that works
+        self.fps_tracker = FPSTracker()
 
         self.running = False
 
@@ -75,6 +75,8 @@ class LiveTracker:
 
     def _run_loop(self):
         try:
+            self.fps_tracker.update()
+            
             while self.running:
                 # If the source thread stopped (e.g. file EOF), exit loop
                 if not self.source.is_alive:
