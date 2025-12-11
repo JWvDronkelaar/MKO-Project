@@ -25,6 +25,7 @@ class VideoSettings:
     camera_index = "/dev/video0"
     width: int = 1920
     height: int = 1080
+    target_fps: int = 30
     
 
 @dataclass
