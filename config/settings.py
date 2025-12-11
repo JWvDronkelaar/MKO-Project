@@ -22,7 +22,7 @@ class VideoSettings:
     # camera_index: str = "Footage/People walking.mp4"
     # width: int = 1280
     # height: int = 720
-    camera_index: int = 2
+    camera_index = "/dev/video0"
     width: int = 1920
     height: int = 1080
     
