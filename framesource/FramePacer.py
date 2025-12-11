@@ -2,44 +2,35 @@ import time
 
 class FramePacer:
     """
-    A pacing controller that enforces a target FPS using short micro-sleeps.
+    Non-blocking frame pacer as a context manager.
+    Usage:
+        pacer = FramePacer(target_fps=30)
+        while running:
+            frame, frame_number = source.read()
+            if frame is None:
+                continue
 
-    - Does NOT cause long blocking sleeps.
-    - Keeps camera drivers responsive.
-    - Works with live camera input or video files.
+            with pacer as should_process:
+                if not should_process:
+                    continue  # skip this frame
+
+                # --- detection / tracking / processing ---
     """
-
     def __init__(self, target_fps: float):
-        self.target_fps = float(target_fps)
-        self.frame_duration = 1.0 / self.target_fps
-        self.last_frame_time = None
+        self.target_interval = 1.0 / target_fps
+        self._last_process_time = time.perf_counter()
+        self.should_process = True
 
-    def start_frame(self):
-        """
-        Mark the beginning of processing for the current frame.
-        """
-        self.last_frame_time = time.perf_counter()
+    def __enter__(self):
+        now = time.perf_counter()
+        elapsed = now - self._last_process_time
+        if elapsed >= self.target_interval:
+            self.should_process = True
+            self._last_process_time = now
+        else:
+            self.should_process = False
+        return self.should_process
 
-    def end_frame(self):
-        """
-        Non-blocking pacing:
-        Sleep in very small steps until the desired frame duration has elapsed.
-
-        Never sleeps long enough to starve V4L2 capture.
-        """
-        if self.last_frame_time is None:
-            return
-
-        target_end = self.last_frame_time + self.frame_duration
-
-        # Short-sleep pacing loop
-        # using 0.001–0.002 sec micro-sleeps instead of one long sleep
-        while True:
-            now = time.perf_counter()
-            remaining = target_end - now
-
-            if remaining <= 0:
-                return
-
-            # Bound the sleep to avoid blocking camera driver
-            time.sleep(min(remaining, 0.002))  # 2ms max sleep
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # nothing to do on exit
+        pass

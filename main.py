@@ -42,7 +42,6 @@ class LiveTracker:
 
 
     def start(self):
-        """Start capture thread and enter processing loop (blocking)."""
         if self.running:
             print("[WARN] LiveTracker.start() called while already running.")
             return
@@ -69,78 +68,73 @@ class LiveTracker:
             self.stop()
 
     def stop(self):
-        """Stop processing and the capture thread; cleanup is handled by _cleanup()."""
         if not self.running:
             return
         self.running = False
 
 
     def _run_loop(self):
-        """
-        Processing loop:
-          - read latest frame non-blocking from self.source.read()
-          - if frame present, call pacer.start_frame(), run full pipeline, then pacer.end_frame()
-        """
         try:
             while self.running:
-                self.pacer.start_frame()
                 # If the source thread stopped (e.g. file EOF), exit loop
                 if not self.source.is_alive:
                     break
-                
-                frame, frame_number = self.source.read()
-                loop_start = time.time()
 
-                # 1) detection (YOLO)
-                det, res = self.detector.detect(frame)
+                with self.pacer as should_process:
+                    if not should_process:
+                        continue # skip this frame
+                    
+                    frame, frame_number = self.source.read()
+                    loop_start = time.time()
 
-                # filter persons only
-                if hasattr(res, "names") and isinstance(res.names, dict):
-                    cls = det.class_id if det.class_id is not None else []
-                    mask = [(c == self.settings.yolo.person_class_id) for c in cls]
-                    if mask:
-                        det = det[np.array(mask, dtype=bool)]
+                    # 1) detection (YOLO)
+                    det, res = self.detector.detect(frame)
 
-                # 2) tracking (ByteTrack)
-                tracks = self.tracker.update_with_detections(det)
+                    # filter persons only
+                    if hasattr(res, "names") and isinstance(res.names, dict):
+                        cls = det.class_id if det.class_id is not None else []
+                        mask = [(c == self.settings.yolo.person_class_id) for c in cls]
+                        if mask:
+                            det = det[np.array(mask, dtype=bool)]
 
-                # 3) world positions (projection + smoothing)
-                world_positions = self.mapper.map_tracks(tracks, loop_start)
+                    # 2) tracking (ByteTrack)
+                    tracks = self.tracker.update_with_detections(det)
 
-                # 4) JSON payloads
-                packet = jsonpack.format_live_packet(world_positions, time.strftime("%H:%M:%S"))
-                packet_for_receiver = jsonpack.format_for_receiver(packet)
+                    # 3) world positions (projection + smoothing)
+                    world_positions = self.mapper.map_tracks(tracks, loop_start)
 
-                # 5) send via UDP
-                try:
-                    self.sender.send(packet_for_receiver)
-                except Exception as e:
-                    # do not crash the loop on transient network errors
-                    print(f"[WARN] UDP send failed: {e}")
+                    # 4) JSON payloads
+                    packet = jsonpack.format_live_packet(world_positions, time.strftime("%H:%M:%S"))
+                    packet_for_receiver = jsonpack.format_for_receiver(packet)
 
-                # 6) optional logging
-                if self.fout:
+                    # 5) send via UDP
                     try:
-                        self.fout.write(json.dumps(packet) + "\n")
-                    except Exception:
-                        pass
+                        self.sender.send(packet_for_receiver)
+                    except Exception as e:
+                        # do not crash the loop on transient network errors
+                        print(f"[WARN] UDP send failed: {e}")
 
-                # 7) visualization
-                if getattr(self.settings, "visualizer", None) and getattr(self.settings.visualizer, "show_window", False):
-                    vis = draw_frame(frame, tracks, self.settings.visualizer, fps_tracker=self.fps_tracker)
-                    cv2.imshow("Live Position Tracker (ESC to quit)", vis)
-                    key = cv2.waitKey(1)
-                else:
-                    # still poll for ESC even if window not shown
-                    key = cv2.waitKey(1)
+                    # 6) optional logging
+                    if self.fout:
+                        try:
+                            self.fout.write(json.dumps(packet) + "\n")
+                        except Exception:
+                            pass
 
-                if key == 27:  # ESC
-                    self.running = False
-                    break
+                    # 7) visualization
+                    if getattr(self.settings, "visualizer", None) and getattr(self.settings.visualizer, "show_window", False):
+                        vis = draw_frame(frame, tracks, self.settings.visualizer, fps_tracker=self.fps_tracker)
+                        cv2.imshow("Live Position Tracker (ESC to quit)", vis)
+                        key = cv2.waitKey(1)
+                    else:
+                        # still poll for ESC even if window not shown
+                        key = cv2.waitKey(1)
 
-                # 9) pacing: delay as needed but only after we've consumed the frame
-                self.pacer.end_frame()
-                self.fps_tracker.update()
+                    if key == 27:  # ESC
+                        self.running = False
+                        break
+
+                    self.fps_tracker.update()
         finally:
             self._cleanup()
 
