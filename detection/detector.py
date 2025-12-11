@@ -27,10 +27,7 @@ class PeopleDetector:
 
         print(f"PeopleDetector using device '{device}'.")
 
-    def detect(self, frame):
-        """Return supervision Detections for the frame (filtered by person class later)."""
-        # TODO: is forcing the device here neccesary and/or even desireable? This might is either ignored or will lead
-        # to a problem on non CUDA systems
-        res = self.model.predict(source=frame, verbose=False, conf=self.conf, iou=self.iou)[0]
+    def detect(self, frame, filter_class):
+        res = self.model.predict(source=frame, verbose=False, conf=self.conf, iou=self.iou, classes=filter_class)[0]
         det = sv.Detections.from_ultralytics(res)
-        return det, res  # return both for name mapping if needed
+        return det, res

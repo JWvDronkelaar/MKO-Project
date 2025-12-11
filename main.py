@@ -90,14 +90,7 @@ class LiveTracker:
                     loop_start = time.time()
 
                     # 1) detection (YOLO)
-                    det, res = self.detector.detect(frame)
-
-                    # filter persons only
-                    if hasattr(res, "names") and isinstance(res.names, dict):
-                        cls = det.class_id if det.class_id is not None else []
-                        mask = [(c == self.settings.yolo.person_class_id) for c in cls]
-                        if mask:
-                            det = det[np.array(mask, dtype=bool)]
+                    det, res = self.detector.detect(frame, filter_class = [settings.yolo.person_class_id])
 
                     # 2) tracking (ByteTrack)
                     tracks = self.tracker.update_with_detections(det)
