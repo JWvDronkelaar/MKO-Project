@@ -11,7 +11,7 @@ from detection.detector import PeopleDetector
 from tracking.tracker import ByteTrackerWrapper
 from transform.projection import Projector
 from transform.world_position_mapper import WorldPositionMapper
-from filters.smoothing import EMASmoother
+from filters.smoothing import KalmanSmoother
 from streamdata.messaging import UDPSender
 import streamdata.jsonpack as jsonpack
 from viz.visualizer import draw_frame
@@ -29,7 +29,7 @@ class LiveTracker:
         self.detector = PeopleDetector(settings.yolo)
         self.tracker = ByteTrackerWrapper()
         self.projector = Projector(settings.tracking)
-        self.smoother = EMASmoother(settings.tracking.ema_alpha)
+        self.smoother = KalmanSmoother()
         self.mapper = WorldPositionMapper(self.projector, self.smoother)
         self.sender = UDPSender(settings.network)
 
@@ -125,7 +125,6 @@ class LiveTracker:
                         except Exception:
                             pass
 
-                    settings.visualizer.show_window = False # TODO: remove later
                     if self.settings.visualizer.show_window:
                         vis = draw_frame(frame, tracks, self.settings.visualizer, fps_tracker=self.fps_tracker)
                         cv2.imshow("Live Position Tracker (Press ESC on the commandline to quit)", vis)

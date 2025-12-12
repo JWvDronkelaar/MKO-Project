@@ -23,7 +23,7 @@ class VideoSettings:
     # width: int = 1920
     # height: int = 1080
     # target_fps: int = 25
-    camera_index = "/dev/video1" # Generally where the elgato cam link will be found
+    camera_index = "/dev/video0" # Generally where the elgato cam link will be found
     width: int = 1920
     height: int = 1080
     target_fps: int = 30

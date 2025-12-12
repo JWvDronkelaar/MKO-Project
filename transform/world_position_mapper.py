@@ -1,14 +1,14 @@
 from typing import List
 from datatypes.datatype import WorldPosition, BBox
 from transform.projection import Projector
-from filters.smoothing import EMASmoother
+from filters.smoothing import KalmanSmoother
 
 class WorldPositionMapper:
     """
     Converts tracked bounding boxes to world coordinates with smoothing.
     """
 
-    def __init__(self, projector: Projector, smoother: EMASmoother):
+    def __init__(self, projector: Projector, smoother: KalmanSmoother):
         self.projector = projector
         self.smoother = smoother
 
