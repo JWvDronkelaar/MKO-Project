@@ -3,7 +3,7 @@ from typing import Optional
 
 @dataclass
 class YOLOSettings:
-    model_path: str = "Algos/yolov8n.pt"
+    model_path: str = "models/yolov8n.pt"
     conf_threshold: float = 0.1
     iou_threshold: float = 0.5
     person_class_id: int = 0
@@ -19,10 +19,11 @@ class TrackingSettings:
 
 @dataclass
 class VideoSettings:
-    # camera_index: str = "Footage/People walking.mp4"
-    # width: int = 1280
-    # height: int = 720
-    camera_index = "/dev/video0"
+    # camera_index: str = "footage/People walking.mp4"
+    # width: int = 1920
+    # height: int = 1080
+    # target_fps: int = 25
+    camera_index = "/dev/video1" # Generally where the elgato cam link will be found
     width: int = 1920
     height: int = 1080
     target_fps: int = 30

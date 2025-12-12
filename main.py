@@ -16,6 +16,7 @@ from streamdata.messaging import UDPSender
 import streamdata.jsonpack as jsonpack
 from viz.visualizer import draw_frame
 from viz.fps_tracker import FPSTracker
+from utils.keyboard_input import Keyboard
 
 
 class LiveTracker:
@@ -23,6 +24,7 @@ class LiveTracker:
         self.settings = settings
 
         self.source = CameraSource(settings.video)
+        self.keyboard = Keyboard()
 
         self.detector = PeopleDetector(settings.yolo)
         self.tracker = ByteTrackerWrapper()
@@ -80,6 +82,13 @@ class LiveTracker:
             while self.running:
                 # If the source thread stopped (e.g. file EOF), exit loop
                 if not self.source.is_alive:
+                    print("Source has died, stopping LiveTracker")
+                    self.stop()
+                    break
+
+                if key := self.keyboard.read_key() == 27:
+                    print("ESC pressed, stopping LiveTracker")
+                    self.stop()
                     break
 
                 with self.pacer as should_process:
@@ -116,20 +125,14 @@ class LiveTracker:
                         except Exception:
                             pass
 
+                    settings.visualizer.show_window = False # TODO: remove later
                     if self.settings.visualizer.show_window:
                         vis = draw_frame(frame, tracks, self.settings.visualizer, fps_tracker=self.fps_tracker)
-                        cv2.imshow("Live Position Tracker (ESC to quit)", vis)
-                        key = cv2.waitKey(1)
-                    else:
-                        # still poll for ESC even if window not shown
-                        key = cv2.waitKey(1)
-
-                    if key == 27:  # ESC
-                        self.running = False
-                        break
+                        cv2.imshow("Live Position Tracker (Press ESC on the commandline to quit)", vis)
 
                     self.fps_tracker.update()
         finally:
+            self.keyboard.restore()
             self._cleanup()
 
 
